@@ -15,7 +15,7 @@ jobs:
         qver: [13_232]
         example: ['MyFirstFPGA']
       fail-fast: false
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
       - name: apt-get install
@@ -38,9 +38,11 @@ jobs:
           echo "# start install"
           cd ./qinst
           Q_INST_DIR=/home/runner/work/intelFPGA_lite
+          # https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/global/install/install_pro_sw_command.htm
+          Q_INST_MODE="text"
           Q_INST_FILE=$( pwd )/$( ls Quartus*.run )
           chmod +x $Q_INST_FILE
-          ../.docker/play-setup.sh $Q_INST_FILE $Q_INST_DIR
+          ../.docker/play-setup.sh $Q_INST_FILE $Q_INST_MODE $Q_INST_DIR
           echo "# rem files"
           cd ../
           rm -rf ./qinst
@@ -58,6 +60,7 @@ jobs:
           export PATH=${Q_INST_DIR}/nios2eds/sdk2/bin/:$PATH
           export PATH=${Q_INST_DIR}/nios2eds/bin/gnu/H-x86_64-pc-linux-gnu/bin/:$PATH
           export PATH=${Q_INST_DIR}/quartus/linux64/gnu/:$PATH
+          export QUARTUS_64BIT=1
           echo "# quartus_sh --version" && quartus_sh --version
           cd /home/runner/work/terasic-de10-nano-kit/terasic-de10-nano-kit/tutorials/${{matrix.example}}/
           echo "# pwd" && pwd
