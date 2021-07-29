@@ -49,6 +49,7 @@ jobs:
 
       - name: Build ${{matrix.example}} blink
         run: |
+          set -x
           export Q_INST_DIR=/home/runner/work/intelFPGA_lite
           export QUARTUS_ROOTDIR=${Q_INST_DIR}/quartus
           export QUARTUS_ROOTDIR_OVERRIDE=${Q_INST_DIR}/quartus
@@ -61,19 +62,20 @@ jobs:
           export PATH=${Q_INST_DIR}/nios2eds/bin/gnu/H-x86_64-pc-linux-gnu/bin/:$PATH
           export PATH=${Q_INST_DIR}/quartus/linux64/gnu/:$PATH
           export QUARTUS_64BIT=1
-          echo "# quartus_sh --version" && quartus_sh --version
-          cd /home/runner/work/terasic-de10-nano-kit/terasic-de10-nano-kit/tutorials/${{matrix.example}}/
-          echo "# pwd" && pwd
-          echo "# ./build_example.sh"
-          ./build_example.sh || :
+          quartus_sh --version
+          cd /home/runner/work
+          git clone https://github.com/MorriganR/ZX-Spectrum-Eco.git
+          cd ./ZX-Spectrum-Eco/synth-zxnext-Cyclone_III
+          pwd
+          ls -la
+          quartus_sh --flow compile zxnext_CycloneIII || :
+          quartus_cpf -c -o bitstream_compression=on output_files/zxnext_CycloneIII.sof output_files/zxnext_CycloneIII.rbf || :
+          tar -cvzf zxnext_CycloneIII.tgz ./output_files
+          ls -la
 
-      - name: Prepare artifact ${{matrix.example}} blink
-        id: push_artifact
-        run: tar -cvzf ${{matrix.example}}_${{matrix.qver}}.tgz ./tutorials/${{matrix.example}}/blink
-
-      - name: Push artifact ${{matrix.example}} blink
+      - name: Push artifact zxnext_CycloneIII.tgz
         uses: actions/upload-artifact@v2.2.4
         with:
-          name: ${{matrix.example}}_${{matrix.qver}}.tgz
-          path: ./${{matrix.example}}_${{matrix.qver}}.tgz
+          name: zxnext_CycloneIII.tgz
+          path: /home/runner/work/ZX-Spectrum-Eco/synth-zxnext-Cyclone_III/zxnext_CycloneIII.tgz
           retention-days: 2
