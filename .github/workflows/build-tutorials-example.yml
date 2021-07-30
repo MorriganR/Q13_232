@@ -12,8 +12,8 @@ jobs:
     name: Build ${{matrix.example}} with Quartus-${{matrix.qver}}
     strategy:
       matrix:
-        qver: [13_232]
-        example: ['MyFirstFPGA']
+        qver: [c2-13_232, c1-13_232]
+        example: ['zxnext_CycloneIII']
       fail-fast: false
     runs-on: ubuntu-20.04
 
@@ -26,20 +26,21 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Get Quartus
-        run: docker pull ghcr.io/morriganr/quartus-inst-c2-${{matrix.qver}}:latest
+        run: docker pull ghcr.io/morriganr/quartus-inst-${{matrix.qver}}:latest
 
       - name: Install Quartus
         run: |
-          docker create -ti --name qsrc ghcr.io/morriganr/quartus-inst-c2-${{matrix.qver}}:latest bash
+          docker create -ti --name qsrc ghcr.io/morriganr/quartus-inst-${{matrix.qver}}:latest bash
           echo "# get files" && docker cp qsrc:qinst .
           echo "# rem docker"
           docker rm -f qsrc
-          docker rmi -f ghcr.io/morriganr/quartus-inst-c2-${{matrix.qver}}
+          docker rmi -f ghcr.io/morriganr/quartus-inst-${{matrix.qver}}
           echo "# start install"
           cd ./qinst
           Q_INST_DIR=/home/runner/work/intelFPGA_lite
           # https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/global/install/install_pro_sw_command.htm
-          Q_INST_MODE="text"
+          # mode: qt gtk xwindow text unattended
+          Q_INST_MODE="unattended"
           Q_INST_FILE=$( pwd )/$( ls Quartus*.run )
           chmod +x $Q_INST_FILE
           ../.docker/play-setup.sh $Q_INST_FILE $Q_INST_MODE $Q_INST_DIR
@@ -47,9 +48,8 @@ jobs:
           cd ../
           rm -rf ./qinst
 
-      - name: Build ${{matrix.example}} blink
+      - name: Build ${{matrix.example}} 
         run: |
-          set -x
           export Q_INST_DIR=/home/runner/work/intelFPGA_lite
           export QUARTUS_ROOTDIR=${Q_INST_DIR}/quartus
           export QUARTUS_ROOTDIR_OVERRIDE=${Q_INST_DIR}/quartus
@@ -62,6 +62,7 @@ jobs:
           export PATH=${Q_INST_DIR}/nios2eds/bin/gnu/H-x86_64-pc-linux-gnu/bin/:$PATH
           export PATH=${Q_INST_DIR}/quartus/linux64/gnu/:$PATH
           export QUARTUS_64BIT=1
+          set -x
           quartus_sh --version
           cd /home/runner/work
           git clone https://github.com/MorriganR/ZX-Spectrum-Eco.git
@@ -73,9 +74,9 @@ jobs:
           tar -cvzf zxnext_CycloneIII.tgz ./output_files
           ls -la
 
-      - name: Push artifact zxnext_CycloneIII.tgz
+      - name: Push artifact zxnext_CycloneIII_${{matrix.qver}}.tgz
         uses: actions/upload-artifact@v2.2.4
         with:
-          name: zxnext_CycloneIII.tgz
+          name: zxnext_CycloneIII_${{matrix.qver}}.tgz
           path: /home/runner/work/ZX-Spectrum-Eco/synth-zxnext-Cyclone_III/zxnext_CycloneIII.tgz
           retention-days: 2
